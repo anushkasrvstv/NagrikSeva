@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🪷 NagrikSeva - UP Citizen Assistance Platform</title>
+  <!-- Google Fonts: Nunito (headings) + Lato (body) + Noto Sans Devanagari (Hindi) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lato:wght@300;400;700;900&family=Noto+Sans+Devanagari:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo-container">
+          <svg class="brand-logo-svg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- Outer ambient glow -->
+              <filter id="lotusGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+                <feColorMatrix in="blur" type="matrix"
+                  values="1 0.4 0 0 0
+                          0.4 0.2 0 0 0
+                          0   0   0 0 0
+                          0   0   0 0.7 0" result="glow"/>
+                <feMerge>
+                  <feMergeNode in="glow"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              <!-- Petal gradient: deep saffron → golden orange -->
+              <linearGradient id="petalGrad" x1="0%" y1="100%" x2="50%" y2="0%">
+                <stop offset="0%" stop-color="#E8711A"/>
+                <stop offset="60%" stop-color="#FF9933"/>
+                <stop offset="100%" stop-color="#FFB347"/>
+              </linearGradient>
+              <!-- Center petal highlight -->
+              <linearGradient id="centerPetalGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stop-color="#FF9933"/>
+                <stop offset="100%" stop-color="#FFD580"/>
+              </linearGradient>
+              <!-- Glow halo radial -->
+              <radialGradient id="haloGrad" cx="50%" cy="60%" r="50%">
+                <stop offset="0%" stop-color="#FF9933" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#FF9933" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+
+            <!-- Ambient glow halo -->
+            <ellipse cx="30" cy="36" rx="22" ry="16" fill="url(#haloGrad)"/>
+
+            <!-- Lotus petals group with glow filter -->
+            <g filter="url(#lotusGlow)">
+              <!-- Back outer petals (navy accent hint) -->
+              <path d="M30,44 C14,37 8,26 14,15 C18,17 24,30 30,44 Z" fill="#CC7A1F" opacity="0.6"/>
+              <path d="M30,44 C46,37 52,26 46,15 C42,17 36,30 30,44 Z" fill="#CC7A1F" opacity="0.6"/>
+
+              <!-- Mid petals -->
+              <path d="M30,44 C16,38 11,28 16,18 C19,20 25,32 30,44 Z" fill="url(#petalGrad)" stroke="#FF9933" stroke-width="0.4"/>
+              <path d="M30,44 C44,38 49,28 44,18 C41,20 35,32 30,44 Z" fill="url(#petalGrad)" stroke="#FF9933" stroke-width="0.4"/>
+
+              <!-- Inner side petals -->
+              <path d="M30,44 C20,35 17,22 24,11 C27,14 29,29 30,44 Z" fill="url(#petalGrad)" stroke="#FF9933" stroke-width="0.4"/>
+              <path d="M30,44 C40,35 43,22 36,11 C33,14 31,29 30,44 Z" fill="url(#petalGrad)" stroke="#FF9933" stroke-width="0.4"/>
+
+              <!-- Center / tallest petal -->
+              <path d="M30,44 C25,27 25,14 30,5 C35,14 35,27 30,44 Z" fill="url(#centerPetalGrad)" stroke="#FFB347" stroke-width="0.5"/>
+            </g>
+
+            <!-- Leaf / water base (green) -->
+            <path d="M11,46 C20,51 40,51 49,46 C43,54 17,54 11,46 Z" fill="#138808" opacity="0.9"/>
+            <!-- Center stamen dot -->
+            <circle cx="30" cy="45" r="3" fill="#138808"/>
+            <circle cx="30" cy="45" r="1.4" fill="#FFD580"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title" data-en="NagrikSeva" data-hi="नागरिकसेवा">NagrikSeva</h1>
+          <p class="brand-tagline" data-en="AI-Powered Citizen Assistance Platform for Uttar Pradesh" data-hi="उत्तर प्रदेश नागरिक सेवा मंच (एआई संचालित)">AI-Powered Citizen Assistance Platform for Uttar Pradesh</p>
+        </div>
+      </div>
+      
+      <div class="header-controls">
+        <!-- Language Switcher -->
+        <div class="lang-toggle" id="langToggle">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">हिन्दी</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-link active" data-target="home-panel">
+        <i class="fa-solid fa-house"></i> <span data-en="Home" data-hi="मुख्य पृष्ठ">Home</span>
+      </button>
+      <button class="tab-link" data-target="schemes-panel">
+        <i class="fa-solid fa-list-check"></i> <span data-en="Schemes Directory" data-hi="योजना सूची">Schemes Directory</span>
+      </button>
+      <button class="tab-link" data-target="eligibility-panel">
+        <i class="fa-solid fa-user-check"></i> <span data-en="Eligibility Finder" data-hi="योग्यता खोजें">Eligibility Finder</span>
+      </button>
+      <button class="tab-link" data-target="roadmaps-panel">
+        <i class="fa-solid fa-route"></i> <span data-en="Service Roadmaps" data-hi="सेवा रोडमैप">Service Roadmaps</span>
+      </button>
+      <button class="tab-link" data-target="chat-panel">
+        <i class="fa-solid fa-comments"></i> <span data-en="SevaMitra AI" data-hi="सेवामित्र एआई">SevaMitra AI</span>
+      </button>
+    </nav>
+
+    <!-- Main Views -->
+    <main>
+      
+      <!-- 1. HOME PANEL -->
+      <section class="tab-panel active" id="home-panel">
+        <div class="welcome-grid">
+          
+          <div class="glass-card welcome-hero">
+            <h2 class="card-title-lg" data-en="Welcome to NagrikSeva" data-hi="नागरिकसेवा में आपका स्वागत है">Welcome to NagrikSeva</h2>
+            <p class="card-desc" data-en="Your digital window to all welfare schemes, documents, and public services in Uttar Pradesh. Check your eligibility, navigate application roadmaps, and chat with our AI assistant to get instant answers." data-hi="उत्तर प्रदेश की सभी कल्याणकारी योजनाओं, दस्तावेजों और सार्वजनिक सेवाओं के लिए आपकी डिजिटल खिड़की। अपनी पात्रता की जांच करें, आवेदन रोडमैप देखें, और त्वरित उत्तर प्राप्त करने के लिए हमारे एआई सहायक से चैट करें।">Your digital window to all welfare schemes, documents, and public services in Uttar Pradesh. Check your eligibility, navigate application roadmaps, and chat with our AI assistant to get instant answers.</p>
+            
+            <div class="features-grid">
+              <div class="feature-mini-card" onclick="switchTab('eligibility-panel')">
+                <i class="fa-solid fa-id-card-clip"></i>
+                <h3 data-en="Eligibility Quiz" data-hi="पात्रता प्रश्नोत्तरी">Eligibility Quiz</h3>
+                <p data-en="Find matching schemes based on your profile" data-hi="अपने प्रोफाइल के आधार पर योजनाएं खोजें">Find matching schemes based on your profile</p>
+              </div>
+              <div class="feature-mini-card" onclick="switchTab('roadmaps-panel')">
+                <i class="fa-solid fa-map-signs"></i>
+                <h3 data-en="Step Roadmaps" data-hi="चरण-दर-चरण रोडमैप">Step Roadmaps</h3>
+                <p data-en="Detailed paths for licenses & documents" data-hi="दस्तावेजों और लाइसेंस के लिए स्पष्ट मार्ग">Detailed paths for licenses & documents</p>
+              </div>
+              <div class="feature-mini-card" onclick="switchTab('chat-panel')">
+                <i class="fa-solid fa-microphone-lines"></i>
+                <h3 data-en="AI SevaMitra" data-hi="एआई सेवामित्र">AI SevaMitra</h3>
+                <p data-en="Voice & text assistant speaking Hindi & English" data-hi="हिन्दी और अंग्रेजी में उत्तर देने वाला सहायक">Voice & text assistant speaking Hindi & English</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-panel">
+            <div class="glass-card">
+              <h3 class="card-title-lg" style="font-size: 1.3rem; margin-bottom: 16px;" data-en="Platform Statistics" data-hi="मंच के आंकड़े">Platform Statistics</h3>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div class="stat-item">
+                  <div class="stat-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                  <div class="stat-info">
+                    <h4>30+</h4>
+                    <p data-en="UP Schemes & Services" data-hi="यूपी योजनाएं एवं सेवाएं">UP Schemes & Services</p>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon saffron"><i class="fa-solid fa-map-location-dot"></i></div>
+                  <div class="stat-info">
+                    <h4>75</h4>
+                    <p data-en="UP Districts Integrated" data-hi="यूपी के जिले एकीकृत">UP Districts Integrated</p>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon emerald"><i class="fa-solid fa-wallet"></i></div>
+                  <div class="stat-info">
+                    <h4 data-en="FREE" data-hi="निःशुल्क">FREE</h4>
+                    <p data-en="Platform Usage Cost" data-hi="मंच उपयोग लागत">Platform Usage Cost</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Jan Seva Kendra Locator -->
+        <div class="glass-card" style="margin-top: 24px;">
+          <h3 class="card-title-lg" data-en="📍 Jan Seva Kendra (Common Service Center) Locator" data-hi="📍 जन सेवा केंद्र (CSC) खोजें">📍 Jan Seva Kendra (Common Service Center) Locator</h3>
+          <p class="card-desc" style="margin-bottom: 16px;" data-en="Find authorized Jan Seva Kendras to submit official applications and perform biometric verifications in Uttar Pradesh." data-hi="उत्तर प्रदेश में आधिकारिक आवेदन पत्र जमा करने और बायोमेट्रिक सत्यापन कराने के लिए अधिकृत जन सेवा केंद्र खोजें।">Find authorized Jan Seva Kendras to submit official applications and perform biometric verifications in Uttar Pradesh.</p>
+          
+          <div class="location-finder">
+            <div class="district-select-row">
+              <div class="form-group">
+                <label for="districtSelect" data-en="Select District" data-hi="जिला चुनें">Select District</label>
+                <select class="form-control" id="districtSelect">
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="tehsilSelect" data-en="Select Tehsil / Block" data-hi="तहसील / ब्लॉक चुनें">Select Tehsil / Block</label>
+                <select class="form-control" id="tehsilSelect">
+                  <!-- Populated by JS based on district -->
+                </select>
+              </div>
+            </div>
+
+            <div class="centers-list" id="centersList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. SCHEMES PANEL -->
+      <section class="tab-panel" id="schemes-panel">
+        <div class="glass-card">
+          <h2 class="card-title-lg" data-en="Explore Government Schemes" data-hi="सरकारी योजनाओं की खोज करें">Explore Government Schemes</h2>
+          <p class="card-desc" data-en="Search through a database of 30+ major schemes and document templates of the Uttar Pradesh government." data-hi="उत्तर प्रदेश सरकार की 30+ प्रमुख योजनाओं और दस्तावेज़ टेम्पलेट्स के डेटाबेस में खोजें।">Search through a database of 30+ major schemes and document templates of the Uttar Pradesh government.</p>
+          
+          <div class="schemes-controls">
+            <div class="search-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" class="search-input" id="schemeSearch" placeholder="Search schemes by name or keywords..." data-en-placeholder="Search schemes by name or keywords..." data-hi-placeholder="योजनाओं के नाम या कीवर्ड खोजें...">
+            </div>
+            
+            <div class="category-filter" id="categoryFilter">
+              <button class="filter-chip active" data-category="all" data-en="All" data-hi="सभी">All</button>
+              <button class="filter-chip" data-category="education" data-en="Education" data-hi="शिक्षा">Education</button>
+              <button class="filter-chip" data-category="agriculture" data-en="Agriculture" data-hi="कृषि">Agriculture</button>
+              <button class="filter-chip" data-category="pension" data-en="Pensions" data-hi="पेंशन">Pensions</button>
+              <button class="filter-chip" data-category="welfare" data-en="Welfare" data-hi="कल्याण">Welfare</button>
+              <button class="filter-chip" data-category="business" data-en="Business" data-hi="व्यवसाय">Business</button>
+              <button class="filter-chip" data-category="health-housing" data-en="Health & Housing" data-hi="स्वास्थ्य और आवास">Health & Housing</button>
+              <button class="filter-chip" data-category="occ:unemployed" data-en="Unemployed" data-hi="बेरोजगार"><i class="fa-solid fa-user-clock"></i> Unemployed</button>
+              <button class="filter-chip" data-category="occ:widow" data-en="Widow" data-hi="विधवा"><i class="fa-solid fa-hand-holding-heart"></i> Widow</button>
+              <button class="filter-chip" data-category="occ:pregnant_woman" data-en="Pregnant Woman" data-hi="गर्भवती महिला"><i class="fa-solid fa-baby"></i> Pregnant</button>
+              <button class="filter-chip" data-category="occ:disabled" data-en="Disabled (Divyang)" data-hi="दिव्यांग"><i class="fa-solid fa-wheelchair"></i> Divyang</button>
+              <button class="filter-chip" data-category="essential-documents" data-en="Documents" data-hi="प्रमाण पत्र">Documents</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Grid Container -->
+          <div class="schemes-list-grid" id="schemesListGrid">
+            <!-- Dynamic Cards go here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. ELIGIBILITY FINDER PANEL -->
+      <section class="tab-panel" id="eligibility-panel">
+        <div class="glass-card">
+          <h2 class="card-title-lg" data-en="Smart Scheme Finder" data-hi="स्मार्ट योजना खोजकर्ता">Smart Scheme Finder</h2>
+          <p class="card-desc" data-en="Answer a few simple questions to instantly find which government schemes and services you qualify for." data-hi="कुछ सरल प्रश्नों के उत्तर देकर तुरंत जानें कि आप किन सरकारी योजनाओं और सेवाओं के लिए पात्र हैं।">Answer a few simple questions to instantly find which government schemes and services you qualify for.</p>
+
+          <!-- Wizard Progress Bar -->
+          <div class="wizard-progress">
+            <div class="wizard-progress-bar" id="wizardProgressBar"></div>
+            <div class="progress-step active" data-step="1">1</div>
+            <div class="progress-step" data-step="2">2</div>
+            <div class="progress-step" data-step="3">3</div>
+          </div>
+
+          <!-- Form Panel -->
+          <form id="eligibilityForm">
+            <!-- Step 1: Age & Gender -->
+            <div class="wizard-step-panel active" data-step="1">
+              <h3 style="margin-bottom: 20px;" data-en="Step 1: Basic Information" data-hi="चरण 1: बुनियादी जानकारी">Step 1: Basic Information</h3>
+              <div class="form-group">
+                <label for="inputAge" data-en="Age (Years)" data-hi="आयु (वर्ष)">Age (Years)</label>
+                <input type="number" class="form-control" id="inputAge" min="0" max="120" placeholder="e.g. 21" required>
+              </div>
+              <div class="form-group">
+                <label for="inputGender" data-en="Gender" data-hi="लिंग">Gender</label>
+                <select class="form-control" id="inputGender" required>
+                  <option value="male" data-en="Male" data-hi="पुरुष">Male</option>
+                  <option value="female" data-en="Female" data-hi="महिला">Female</option>
+                  <option value="any" data-en="Other / Prefer not to say" data-hi="अन्य / बताना नहीं चाहते">Other / Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Step 2: Income & Category -->
+            <div class="wizard-step-panel" data-step="2">
+              <h3 style="margin-bottom: 20px;" data-en="Step 2: Financial & Social Details" data-hi="चरण 2: वित्तीय और सामाजिक विवरण">Step 2: Financial & Social Details</h3>
+              <div class="form-group">
+                <label for="inputIncome" data-en="Annual Household Income (₹)" data-hi="वार्षिक पारिवारिक आय (₹)">Annual Household Income (₹)</label>
+                <input type="number" class="form-control" id="inputIncome" min="0" placeholder="e.g. 150000" required>
+              </div>
+              <div class="form-group">
+                <label for="inputCategory" data-en="Social Category" data-hi="सामाजिक श्रेणी">Social Category</label>
+                <select class="form-control" id="inputCategory" required>
+                  <option value="General" data-en="General" data-hi="सामान्य">General</option>
+                  <option value="OBC" data-en="Other Backward Classes (OBC)" data-hi="अन्य पिछड़ा वर्ग (OBC)">Other Backward Classes (OBC)</option>
+                  <option value="SC" data-en="Scheduled Castes (SC)" data-hi="अनुसूचित जाति (SC)">Scheduled Castes (SC)</option>
+                  <option value="ST" data-en="Scheduled Tribes (ST)" data-hi="अनुसूचित जनजाति (ST)">Scheduled Tribes (ST)</option>
+                  <option value="Minority" data-en="Minority Communities" data-hi="अल्पसंख्यक समुदाय">Minority Communities</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Step 3: Occupation -->
+            <div class="wizard-step-panel" data-step="3">
+              <h3 style="margin-bottom: 20px;" data-en="Step 3: Occupation Details" data-hi="चरण 3: व्यवसाय का विवरण">Step 3: Occupation Details</h3>
+              <div class="form-group">
+                <label for="inputOccupation" data-en="Primary Occupation" data-hi="मुख्य व्यवसाय">Primary Occupation</label>
+                <select class="form-control" id="inputOccupation" required>
+                  <option value="general_public" data-en="General Citizen" data-hi="सामान्य नागरिक">General Citizen</option>
+                  <option value="student" data-en="Student" data-hi="छात्र">Student</option>
+                  <option value="farmer" data-en="Farmer / Agricultural Worker" data-hi="किसान / कृषि मजदूर">Farmer / Agricultural Worker</option>
+                  <option value="unemployed" data-en="Unemployed" data-hi="बेरोजगार">Unemployed</option>
+                  <option value="business_owner" data-en="Small Business Owner / Self-Employed" data-hi="छोटे व्यवसाय के मालिक / स्वरोजगार">Small Business Owner / Self-Employed</option>
+                  <option value="laborer" data-en="Construction Worker / Manual Laborer" data-hi="निर्माण श्रमिक / मजदूर">Construction Worker / Manual Laborer</option>
+                  <option value="pregnant_woman" data-en="Pregnant Woman" data-hi="गर्भवती महिला">Pregnant Woman</option>
+                  <option value="widow" data-en="Widow" data-hi="विधवा">Widow</option>
+                  <option value="disabled" data-en="Disabled (Divyang)" data-hi="दिव्यांग">Disabled (Divyang)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="wizard-actions">
+              <button type="button" class="btn btn-secondary" id="btnWizardPrev" style="visibility: hidden;">
+                <i class="fa-solid fa-arrow-left"></i> <span data-en="Back" data-hi="पीछे">Back</span>
+              </button>
+              <button type="button" class="btn btn-primary" id="btnWizardNext">
+                <span data-en="Next" data-hi="आगे">Next</span> <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </form>
+
+          <!-- Match Results Container -->
+          <div class="results-container" id="eligibilityResults">
+            <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 32px 0;">
+            <div class="results-header">
+              <h3 data-en="🎉 Schemes You Qualify For" data-hi="🎉 योजनाएं जिनके लिए आप पात्र हैं">🎉 Schemes You Qualify For</h3>
+              <p style="color: var(--text-secondary);" id="matchCountLabel">Found matches</p>
+            </div>
+            <div class="schemes-list-grid" id="matchedSchemesGrid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ROADMAPS PANEL -->
+      <section class="tab-panel" id="roadmaps-panel">
+        <div class="glass-card">
+          <h2 class="card-title-lg" data-en="Service Roadmaps" data-hi="सेवा रोडमैप">Service Roadmaps</h2>
+          <p class="card-desc" data-en="Check step-by-step interactive timelines to secure essential documents, scholarships, or credit setups." data-hi="महत्वपूर्ण दस्तावेज, छात्रवृत्ति, या व्यावसायिक लोन प्राप्त करने के लिए चरण-दर-चरण इंटरैक्टिव समयसीमा देखें।">Check step-by-step interactive timelines to secure essential documents, scholarships, or credit setups.</p>
+
+          <div class="roadmap-top-bar">
+            <div class="roadmap-select-wrap">
+              <i class="fa-solid fa-compass"></i>
+              <select id="roadmapSelect" class="roadmap-select">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+          </div>
+
+          <div class="roadmap-viewer">
+            <h3 id="activeRoadmapTitle" style="margin-bottom: 8px;">Active Roadmap</h3>
+            <div class="timeline" id="activeTimeline">
+              <!-- Dynamically loaded steps -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. CHAT ASSISTANT PANEL -->
+      <section class="tab-panel" id="chat-panel">
+        <div class="chat-wrapper">
+          <div class="chat-header-bar">
+            <div class="chat-bot-details">
+              <div class="chat-bot-avatar">SM</div>
+              <div class="chat-bot-status">
+                <h4 data-en="SevaMitra AI" data-hi="सेवामित्र एआई">SevaMitra AI</h4>
+                <span data-en="Online Assistance" data-hi="ऑनलाइन सहायता">Online Assistance</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <!-- TTS helper button -->
+              <button class="chat-action-btn" id="btnToggleSpeech" title="Read responses aloud">
+                <i class="fa-solid fa-volume-high"></i> <span data-en="Read Aloud" data-hi="बोलकर पढ़ें">Read Aloud</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Messages body -->
+          <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+              <p data-en="Hello! I am SevaMitra, your UP citizen schemes guide. How can I help you today?" data-hi="नमस्ते! मैं सेवामित्र हूँ, आपका यूपी नागरिक योजना गाइड। आज मैं आपकी क्या सहायता कर सकता हूँ?">Hello! I am SevaMitra, your UP citizen schemes guide. How can I help you today?</p>
+            </div>
+          </div>
+
+          <!-- Inputs -->
+          <div class="chat-input-bar">
+            <button class="voice-input-btn" id="btnVoiceInput" title="Speak in Hindi/English">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask me something..." data-en-placeholder="Ask me something..." data-hi-placeholder="मुझसे कुछ पूछें...">
+            <button class="btn btn-primary" id="btnChatSend">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Detail Information Modal (Glassmorphic) -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamically loaded -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Scripts -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
