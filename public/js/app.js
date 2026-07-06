@@ -4,6 +4,11 @@ let schemesData = [];
 let activeTab = 'home-panel';
 let speechSynthesizerEnabled = false;
 
+// New State Variables
+let currentUser = null; 
+let userApplications = []; 
+let userGrievances = []; 
+
 // District data with tehsils/blocks
 const districtList = [
   { id: "Lucknow", nameEn: "Lucknow", nameHi: "लखनऊ", tehsils: ["Sadar Lucknow", "Mohanlalganj"] },
@@ -182,6 +187,29 @@ const jskDatabase = {
   ]
 };
 
+// Register Service Worker for offline support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js');
+  });
+}
+
+// Online/Offline detection
+function updateOnlineStatus() {
+  const banner = document.getElementById('offlineBanner');
+  if (!navigator.onLine) {
+    banner.classList.add('visible');
+    banner.textContent = currentLanguage === 'hi'
+      ? '🔴 आप ऑफ़लाइन हैं — सीमित सुविधाएं उपलब्ध'
+      : '🔴 You are offline — limited features available';
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
 // Initial setup on window load
 window.addEventListener('DOMContentLoaded', async () => {
   setupLanguageSwitcher();
@@ -191,6 +219,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupChatSystem();
   setupJskLocator();
   
+  // Custom NagrikSeva setups
+  setupAuthSystem();
+  setupGrievancePortal();
+  setupAnalyticsDashboard();
+  setupNotificationSystem();
+  setupApplySystem();
+
   // Load schemes from backend API
   await fetchSchemes();
 });
@@ -251,6 +286,14 @@ function applyLanguage(lang) {
   // Re-render roadmap system (dropdown + sidebar)
   setupRoadmapsSystem();
   
+  // Update offline banner language
+  const offlineBanner = document.getElementById('offlineBanner');
+  if (offlineBanner && offlineBanner.classList.contains('visible')) {
+    offlineBanner.textContent = lang === 'hi'
+      ? '🔴 आप ऑफ़लाइन हैं — सीमित सुविधाएं उपलब्ध'
+      : '🔴 You are offline — limited features available';
+  }
+
   // Re-populate district & tehsil dropdowns for language update
   const currDist = document.getElementById('districtSelect').value;
   populateDistrictDropdown();
@@ -438,6 +481,13 @@ window.openDetailsModal = function(schemeId) {
   const scheme = schemesData.find(s => s.id === schemeId);
   if (!scheme) return;
   
+  // Track telemetry view
+  fetch('/api/analytics/track-view', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ schemeId })
+  }).catch(err => console.error("Telemetry track error:", err));
+
   const modal = document.getElementById('detailModal');
   const body = document.getElementById('modalBody');
   
@@ -453,6 +503,12 @@ window.openDetailsModal = function(schemeId) {
     const docName = currentLanguage === 'hi' ? doc.hi : doc.en;
     docItems += `<li><i class="fa-solid fa-check"></i> ${docName}</li>`;
   });
+
+  const isBookmarked = currentUser && currentUser.bookmarks && currentUser.bookmarks.includes(schemeId);
+  const bookmarkIcon = isBookmarked ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
+  const bookmarkText = isBookmarked 
+    ? (currentLanguage === 'hi' ? 'सहेजा गया' : 'Saved')
+    : (currentLanguage === 'hi' ? 'बुकमार्क करें' : 'Bookmark');
   
   body.innerHTML = `
     <h2>${name}</h2>
@@ -489,13 +545,23 @@ window.openDetailsModal = function(schemeId) {
       <p style="font-size: 0.9rem; line-height: 1.7; white-space: pre-line;">${procedure}</p>
     </div>
     
-    <div style="display: flex; gap: 12px; margin-top: 12px;">
-      <a href="${scheme.officialUrl}" target="_blank" class="btn btn-primary" style="flex: 1;">
-        <i class="fa-solid fa-up-right-from-square"></i> <span data-en="Apply Now (Official Website)" data-hi="अभी आवेदन करें (आधिकारिक वेबसाइट)">${currentLanguage === 'hi' ? 'अभी आवेदन करें (आधिकारिक वेबसाइट)' : 'Apply Now (Official Website)'}</span>
-      </a>
-      <button class="btn btn-secondary" onclick="shareToWhatsApp('${scheme.id}')">
-        <i class="fa-brands fa-whatsapp"></i> <span data-en="Share to WhatsApp" data-hi="व्हाट्सएप पर भेजें">${currentLanguage === 'hi' ? 'व्हाट्सएप पर भेजें' : 'Share to WhatsApp'}</span>
-      </button>
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-primary" onclick="startOnlineApplication('${scheme.id}')" style="flex: 2; background: linear-gradient(135deg, var(--accent-saffron) 0%, var(--accent-saffron-dark) 100%);">
+          <i class="fa-solid fa-file-signature"></i> <span data-en="Apply Online (Track status)" data-hi="ऑनलाइन आवेदन करें (स्थिति ट्रैक करें)">${currentLanguage === 'hi' ? 'ऑनलाइन आवेदन करें (स्थिति ट्रैक करें)' : 'Apply Online (Track status)'}</span>
+        </button>
+        <button class="btn btn-secondary" onclick="toggleBookmark('${scheme.id}')" style="flex: 1;">
+          <i class="${bookmarkIcon}"></i> <span>${bookmarkText}</span>
+        </button>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <a href="${scheme.officialUrl}" target="_blank" class="btn btn-secondary" style="flex: 1;">
+          <i class="fa-solid fa-up-right-from-square"></i> <span data-en="Official Website" data-hi="आधिकारिक वेबसाइट">${currentLanguage === 'hi' ? 'आधिकारिक वेबसाइट' : 'Official Website'}</span>
+        </a>
+        <button class="btn btn-secondary" onclick="shareToWhatsApp('${scheme.id}')" style="flex: 1;">
+          <i class="fa-brands fa-whatsapp"></i> <span data-en="Share to WhatsApp" data-hi="व्हाट्सएप पर भेजें">${currentLanguage === 'hi' ? 'व्हाट्सएप पर भेजें' : 'Share to WhatsApp'}</span>
+        </button>
+      </div>
     </div>
   `;
   
@@ -743,13 +809,43 @@ function setupChatSystem() {
   const btnVoice = document.getElementById('btnVoiceInput');
   const btnToggleSpeech = document.getElementById('btnToggleSpeech');
   
+  // Floating Chat Toggle Logic
+  const bubble = document.getElementById('chatBubbleBtn');
+  const windowOverlay = document.getElementById('floatingChatWindow');
+  const btnClose = document.getElementById('btnCloseChat');
+
+  if (bubble && windowOverlay) {
+    bubble.addEventListener('click', (e) => {
+      e.stopPropagation();
+      windowOverlay.classList.toggle('active');
+      if (windowOverlay.classList.contains('active')) {
+        setTimeout(() => {
+          if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 50);
+      }
+    });
+
+    if (btnClose) {
+      btnClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        windowOverlay.classList.remove('active');
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!windowOverlay.contains(e.target) && e.target !== bubble && !bubble.contains(e.target)) {
+        windowOverlay.classList.remove('active');
+      }
+    });
+  }
+
   // Voice Synthesis Toggle (Read Aloud)
   btnToggleSpeech.addEventListener('click', () => {
     speechSynthesizerEnabled = !speechSynthesizerEnabled;
     btnToggleSpeech.classList.toggle('active', speechSynthesizerEnabled);
     if (speechSynthesizerEnabled) {
       btnToggleSpeech.style.background = 'var(--accent-saffron-glow)';
-      btnToggleSpeech.style.color = '#fff';
+      btnToggleSpeech.style.color = 'var(--accent-saffron)';
       btnToggleSpeech.style.borderColor = 'var(--accent-saffron)';
     } else {
       btnToggleSpeech.style.background = '';
@@ -1022,4 +1118,927 @@ function updateJskCentersList() {
     `;
     list.appendChild(card);
   });
+}
+
+// ==========================================
+// TOAST ALERT SYSTEM
+// ==========================================
+function initToastContainer() {
+  if (!document.getElementById('toastContainer')) {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+}
+
+window.showToast = function(title, text, type = 'info') {
+  initToastContainer();
+  const container = document.getElementById('toastContainer');
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast-message';
+  
+  let iconClass = 'fa-solid fa-circle-info navy';
+  if (type === 'success') iconClass = 'fa-solid fa-circle-check green';
+  if (type === 'warning') iconClass = 'fa-solid fa-triangle-exclamation saffron';
+  if (type === 'error') iconClass = 'fa-solid fa-circle-xmark red';
+  
+  toast.innerHTML = `
+    <div class="toast-icon"><i class="${iconClass}"></i></div>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-text">${text}</div>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    toast.classList.add('closing');
+    toast.addEventListener('animationend', () => {
+      toast.remove();
+    });
+  }, 5000);
+};
+
+// ==========================================
+// SCHEME DEADLINES DATA & ALERTS SYSTEM
+// ==========================================
+const schemeDeadlines = {
+  "up-post-matric-scholarship": "2026-07-25",
+  "up-pre-matric-scholarship": "2026-07-18",
+  "up-nmms-scholarship": "2026-08-15",
+  "up-kanya-sumangala": "2026-08-05",
+  "up-shadi-bimar-yojana": "2026-07-30",
+  "up-old-age-pension": "2026-09-01",
+  "up-widow-pension": "2026-08-25",
+  "up-divyang-pension": "2026-08-30",
+  "up-gopal-card-yojana": "2026-07-22",
+  "up-free-tablet-smartphone": "2026-07-16"
+};
+
+function setupNotificationSystem() {
+  const btn = document.getElementById('notificationBtn');
+  const dropdown = document.getElementById('notificationDropdown');
+  const btnPush = document.getElementById('btnRequestPush');
+  
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  });
+  
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== btn) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  btnPush.addEventListener('click', () => {
+    if (!('Notification' in window)) {
+      showToast("Notification Error", "Browser doesn't support notifications.", "error");
+      return;
+    }
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        showToast("Notifications Enabled", "You will now receive desktop notifications for deadlines!", "success");
+        new Notification("NagrikSeva UP", {
+          body: "Notifications enabled successfully! We will notify you here about deadlines.",
+          icon: "/icons/icon-192.svg"
+        });
+      } else {
+        showToast("Notifications Blocked", "Please check your browser permissions to enable desktop alerts.", "warning");
+      }
+    });
+  });
+
+  calculateDeadlines();
+}
+
+function calculateDeadlines() {
+  const list = document.getElementById('notificationList');
+  const badge = document.getElementById('notificationBadge');
+  list.innerHTML = '';
+  
+  const today = new Date("2026-07-06");
+  let activeAlerts = 0;
+  
+  const items = [];
+  
+  for (const [schemeId, dateStr] of Object.entries(schemeDeadlines)) {
+    const deadline = new Date(dateStr);
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays >= 0 && diffDays <= 30) {
+      const scheme = schemesData.find(s => s.id === schemeId);
+      if (scheme) {
+        items.push({
+          scheme,
+          days: diffDays,
+          dateStr
+        });
+        activeAlerts++;
+      }
+    }
+  }
+
+  items.sort((a, b) => a.days - b.days);
+
+  if (items.length === 0) {
+    list.innerHTML = `<li class="notification-empty" data-en="No upcoming deadlines." data-hi="कोई आगामी समय सीमा नहीं है।">${currentLanguage === 'hi' ? 'कोई आगामी समय सीमा नहीं है।' : 'No upcoming deadlines.'}</li>`;
+    badge.style.display = 'none';
+    return;
+  }
+
+  badge.textContent = activeAlerts;
+  badge.style.display = 'flex';
+
+  items.forEach(item => {
+    const name = currentLanguage === 'hi' ? item.scheme.name.hi : item.scheme.name.en;
+    const isUrgent = item.days <= 10;
+    
+    const li = document.createElement('li');
+    li.className = `notification-list-item ${isUrgent ? 'urgent' : ''}`;
+    
+    const title = isUrgent 
+      ? (currentLanguage === 'hi' ? '⚠️ समय सीमा आ रही है!' : '⚠️ Closing Soon!')
+      : (currentLanguage === 'hi' ? 'समय सीमा सूचना' : 'Deadline Alert');
+      
+    const desc = currentLanguage === 'hi'
+      ? `"${name}" ${item.days} दिनों में बंद हो रहा है (${item.dateStr})`
+      : `"${name}" closes in ${item.days} days (${item.dateStr})`;
+
+    li.innerHTML = `
+      <div style="font-weight: 700; color: ${isUrgent ? '#DC2626' : 'var(--accent-navy)'}">${title}</div>
+      <div>${desc}</div>
+      <button class="btn btn-secondary" onclick="openDetailsModal('${item.scheme.id}')" style="padding: 4px 8px; font-size: 0.72rem; align-self: flex-start; margin-top: 4px;">
+        <span data-en="Details" data-hi="विवरण">${currentLanguage === 'hi' ? 'विवरण' : 'Details'}</span>
+      </button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// ==========================================
+// USER ACCOUNTS SYSTEM (LOGIN/REGISTER/PROFILE)
+// ==========================================
+function setupAuthSystem() {
+  const headerUserBtn = document.getElementById('headerUserBtn');
+  if (headerUserBtn) {
+    headerUserBtn.addEventListener('click', () => {
+      switchTab('user-panel');
+    });
+  }
+
+  const tabLogin = document.getElementById('authTabLogin');
+  const tabRegister = document.getElementById('authTabRegister');
+  const formLogin = document.getElementById('loginForm');
+  const formRegister = document.getElementById('registerForm');
+  const btnLogout = document.getElementById('btnLogout');
+  const profileForm = document.getElementById('profileForm');
+
+  tabLogin.addEventListener('click', () => {
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+    formLogin.style.display = 'block';
+    formRegister.style.display = 'none';
+  });
+
+  tabRegister.addEventListener('click', () => {
+    tabRegister.classList.add('active');
+    tabLogin.classList.remove('active');
+    formRegister.style.display = 'block';
+    formLogin.style.display = 'none';
+  });
+
+  formLogin.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        currentUser = data.user;
+        onUserLoggedIn();
+        showToast("Success", `Welcome back, ${currentUser.username}!`, "success");
+      } else {
+        errorEl.textContent = data.error || 'Login failed.';
+        errorEl.style.display = 'block';
+      }
+    } catch (err) {
+      errorEl.textContent = 'Connection error.';
+      errorEl.style.display = 'block';
+    }
+  });
+
+  formRegister.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('regPasswordConfirm').value;
+    const errorEl = document.getElementById('regError');
+    errorEl.style.display = 'none';
+
+    if (password.length < 6) {
+      errorEl.textContent = 'Password must be at least 6 characters.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (password !== confirm) {
+      errorEl.textContent = 'Passwords do not match.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        currentUser = data.user;
+        onUserLoggedIn();
+        showToast("Account Created", "Your profile is ready. Fill your eligibility details below!", "success");
+      } else {
+        errorEl.textContent = data.error || 'Registration failed.';
+        errorEl.style.display = 'block';
+      }
+    } catch (err) {
+      errorEl.textContent = 'Connection error.';
+      errorEl.style.display = 'block';
+    }
+  });
+
+  btnLogout.addEventListener('click', () => {
+    currentUser = null;
+    userApplications = [];
+    userGrievances = [];
+    localStorage.removeItem('logged_in_user');
+    
+    document.getElementById('authFormContainer').style.display = 'block';
+    document.getElementById('userDashboardContainer').style.display = 'none';
+    document.getElementById('userTabLabel').textContent = currentLanguage === 'hi' ? 'खाता' : 'Account';
+    
+    document.getElementById('grievanceAuthAlert').style.display = 'block';
+    document.getElementById('grievanceContent').style.display = 'none';
+
+    // Reset top-right header controls state
+    const userDot = document.getElementById('headerUserDot');
+    if (userDot) userDot.style.display = 'none';
+    
+    const userIcon = document.getElementById('headerUserIcon');
+    if (userIcon) {
+      userIcon.className = 'fa-solid fa-user';
+    }
+
+    showToast("Logged Out", "You have been securely logged out.", "info");
+    
+    renderSchemesGrid(schemesData);
+  });
+
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const profile = {
+      age: document.getElementById('profileAge').value,
+      gender: document.getElementById('profileGender').value,
+      income: document.getElementById('profileIncome').value,
+      category: document.getElementById('profileCategory').value,
+      occupation: document.getElementById('profileOccupation').value
+    };
+    const successEl = document.getElementById('profileSuccess');
+    successEl.style.display = 'none';
+
+    try {
+      const response = await fetch('/api/auth/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, profile })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        currentUser = data.user;
+        successEl.textContent = currentLanguage === 'hi' ? 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई!' : 'Profile updated successfully!';
+        successEl.style.display = 'block';
+        showToast("Profile Saved", "Saved eligibility parameters updated.", "success");
+        setTimeout(() => successEl.style.display = 'none', 4000);
+      }
+    } catch (err) {
+      showToast("Error", "Could not save profile details.", "error");
+    }
+  });
+
+  const savedUser = localStorage.getItem('logged_in_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      onUserLoggedIn(true);
+    } catch (e) {
+      localStorage.removeItem('logged_in_user');
+    }
+  }
+}
+
+async function onUserLoggedIn(isAutoLoad = false) {
+  localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+  
+  document.getElementById('authFormContainer').style.display = 'none';
+  document.getElementById('userDashboardContainer').style.display = 'block';
+  
+  document.getElementById('userTabLabel').textContent = currentUser.username;
+  document.getElementById('userDashboardWelcome').textContent = `${currentLanguage === 'hi' ? 'नमस्ते, ' : 'Welcome, '}${currentUser.username}!`;
+  document.getElementById('userDashboardEmail').textContent = currentUser.email;
+
+  // Update top-right user account widget
+  const userDot = document.getElementById('headerUserDot');
+  if (userDot) userDot.style.display = 'block';
+  
+  const userIcon = document.getElementById('headerUserIcon');
+  if (userIcon) {
+    userIcon.className = 'fa-solid fa-circle-user';
+  }
+
+  if (currentUser.profile) {
+    document.getElementById('profileAge').value = currentUser.profile.age || '';
+    document.getElementById('profileGender').value = currentUser.profile.gender || 'any';
+    document.getElementById('profileIncome').value = currentUser.profile.income || '';
+    document.getElementById('profileCategory').value = currentUser.profile.category || 'General';
+    document.getElementById('profileOccupation').value = currentUser.profile.occupation || 'general_public';
+  }
+
+  document.getElementById('grievanceAuthAlert').style.display = 'none';
+  document.getElementById('grievanceContent').style.display = 'grid';
+
+  await fetchUserApplications();
+  await fetchUserGrievances();
+  renderBookmarksList();
+
+  renderSchemesGrid(schemesData);
+  setupAnalyticsDashboard();
+}
+
+async function fetchUserApplications() {
+  if (!currentUser) return;
+  try {
+    const response = await fetch(`/api/applications?username=${encodeURIComponent(currentUser.username)}`);
+    userApplications = await response.json();
+    renderApplicationsList();
+  } catch (err) {
+    console.error("Failed to load user applications:", err);
+  }
+}
+
+function renderApplicationsList() {
+  const list = document.getElementById('userApplicationsList');
+  list.innerHTML = '';
+
+  if (userApplications.length === 0) {
+    list.innerHTML = `<div style="text-align:center; padding: 24px; color: var(--text-muted);" data-en="You haven't submitted any applications online yet." data-hi="आपने अभी तक कोई ऑनलाइन आवेदन जमा नहीं किया है।">${currentLanguage === 'hi' ? 'आपने अभी तक कोई ऑनलाइन आवेदन जमा नहीं किया है।' : "You haven't submitted any applications online yet."}</div>`;
+    return;
+  }
+
+  userApplications.forEach(app => {
+    const card = document.createElement('div');
+    card.className = 'app-history-card';
+
+    const badgeClass = app.status.toLowerCase().replace(/\s+/g, '.');
+
+    const isApproved = app.status === 'Approved';
+    const isRejected = app.status === 'Rejected';
+    
+    let step3Text = currentLanguage === 'hi' ? 'स्वीकृत' : 'Approved';
+    let step3Class = '';
+    if (isRejected) {
+      step3Text = currentLanguage === 'hi' ? 'अस्वीकृत' : 'Rejected';
+      step3Class = 'rejected';
+    } else if (isApproved) {
+      step3Class = 'completed';
+    }
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <h4 style="color: var(--accent-navy);">${app.schemeName}</h4>
+          <span style="font-size: 0.78rem; color: var(--text-secondary);">${currentLanguage === 'hi' ? 'आईडी' : 'App ID'}: <strong>${app.applicationId}</strong> | ${currentLanguage === 'hi' ? 'जिला' : 'District'}: <strong>${app.district}</strong></span>
+        </div>
+        <div class="status-badge ${badgeClass}">${currentLanguage === 'hi' ? getHindiStatus(app.status) : app.status}</div>
+      </div>
+      
+      <div class="status-tracker-container">
+        <div class="status-tracker-line">
+          <div class="status-tracker-line-fill" style="width: ${app.status === 'Submitted' ? '0%' : (app.status === 'Under Review' ? '50%' : '100%')}"></div>
+        </div>
+        <div class="status-step completed">
+          <div class="status-step-circle"><i class="fa-solid fa-check"></i></div>
+          <span data-en="Submitted" data-hi="प्रस्तुत">${currentLanguage === 'hi' ? 'प्रस्तुत' : 'Submitted'}</span>
+        </div>
+        <div class="status-step ${app.status !== 'Submitted' ? 'completed' : 'active'}">
+          <div class="status-step-circle">${app.status !== 'Submitted' ? '<i class="fa-solid fa-check"></i>' : '2'}</div>
+          <span data-en="Under Review" data-hi="समीक्षाधीन">${currentLanguage === 'hi' ? 'समीक्षाधीन' : 'Under Review'}</span>
+        </div>
+        <div class="status-step ${step3Class || (app.status === 'Under Review' ? '' : '')}">
+          <div class="status-step-circle">${isApproved ? '<i class="fa-solid fa-check"></i>' : (isRejected ? '<i class="fa-solid fa-xmark"></i>' : '3')}</div>
+          <span>${step3Text}</span>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function getHindiStatus(status) {
+  const mapping = {
+    'Submitted': 'प्रस्तुत किया गया',
+    'Under Review': 'समीक्षाधीन',
+    'Approved': 'स्वीकृत',
+    'Rejected': 'अस्वीकृत'
+  };
+  return mapping[status] || status;
+}
+
+window.toggleBookmark = async function(schemeId) {
+  if (!currentUser) {
+    showToast("Auth Required", "Please login or register to bookmark schemes.", "warning");
+    switchTab('user-panel');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/auth/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser.username, schemeId })
+    });
+    const data = await response.json();
+    if (response.ok && data.success) {
+      currentUser.bookmarks = data.bookmarks;
+      localStorage.setItem('logged_in_user', JSON.stringify(currentUser));
+      
+      const isBookmarked = currentUser.bookmarks.includes(schemeId);
+      showToast(
+        isBookmarked ? "Bookmark Added" : "Bookmark Removed", 
+        isBookmarked ? "Scheme saved to account bookmarks list." : "Scheme removed from bookmarks list.", 
+        "success"
+      );
+
+      renderBookmarksList();
+      
+      const detailModal = document.getElementById('detailModal');
+      if (detailModal && detailModal.classList.contains('active')) {
+        openDetailsModal(schemeId);
+      } else {
+        renderSchemesGrid(schemesData);
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+function renderBookmarksList() {
+  const list = document.getElementById('userBookmarksList');
+  list.innerHTML = '';
+  
+  if (!currentUser || !currentUser.bookmarks || currentUser.bookmarks.length === 0) {
+    list.innerHTML = `<div style="text-align:center; padding: 24px; color: var(--text-muted);" data-en="No bookmarks saved yet." data-hi="कोई बुकमार्क अभी तक नहीं सहेजा गया है।">${currentLanguage === 'hi' ? 'कोई बुकमार्क अभी तक नहीं सहेजा गया है।' : 'No bookmarks saved yet.'}</div>`;
+    return;
+  }
+
+  currentUser.bookmarks.forEach(id => {
+    const scheme = schemesData.find(s => s.id === id);
+    if (!scheme) return;
+
+    const name = currentLanguage === 'hi' ? scheme.name.hi : scheme.name.en;
+    const card = document.createElement('div');
+    card.className = 'bookmark-item-card';
+
+    card.innerHTML = `
+      <span style="font-weight:700; color: var(--text-primary); font-size:0.88rem;">${name}</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="openDetailsModal('${scheme.id}')" style="padding: 6px 10px; font-size: 0.75rem;">
+          <span data-en="View" data-hi="देखें">${currentLanguage === 'hi' ? 'देखें' : 'View'}</span>
+        </button>
+        <button class="btn btn-secondary btn-icon" onclick="toggleBookmark('${scheme.id}')" style="padding: 6px; color:#DC2626;" title="Remove">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ==========================================
+// ONLINE APPLICATION TIMELINES / SUBMIT SYSTEM
+// ==========================================
+function setupApplySystem() {
+  const form = document.getElementById('schemeApplicationForm');
+  
+  const districtSelect = document.getElementById('applyDistrict');
+  districtSelect.innerHTML = '';
+  districtList.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = currentLanguage === 'hi' ? d.nameHi : d.nameEn;
+    districtSelect.appendChild(opt);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    const payload = {
+      username: currentUser.username,
+      schemeId: document.getElementById('applySchemeId').value,
+      schemeName: document.getElementById('applySchemeName').value,
+      district: document.getElementById('applyDistrict').value,
+      applicantName: document.getElementById('applyApplicantName').value.trim(),
+      applicantAge: document.getElementById('applyAge').value,
+      applicantGender: document.getElementById('applyGender').value,
+      applicantIncome: document.getElementById('applyIncome').value,
+      applicantCategory: document.getElementById('applyCategory').value,
+      applicantOccupation: document.getElementById('applyOccupation').value
+    };
+
+    try {
+      const response = await fetch('/api/applications/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        closeApplyModal();
+        showToast("Application Submitted", `Successfully submitted! Ticket: ${data.application.applicationId}`, "success");
+        
+        await fetchUserApplications();
+        setupAnalyticsDashboard();
+        switchTab('user-panel');
+      } else {
+        showToast("Error", data.error || 'Submission failed.', "error");
+      }
+    } catch (err) {
+      showToast("Error", "Connection failure.", "error");
+    }
+  });
+}
+
+window.startOnlineApplication = function(schemeId) {
+  if (!currentUser) {
+    showToast("Auth Required", "Please login or register to apply online.", "warning");
+    closeModal();
+    switchTab('user-panel');
+    return;
+  }
+
+  const scheme = schemesData.find(s => s.id === schemeId);
+  if (!scheme) return;
+
+  const warningEl = document.getElementById('applyWarningMessage');
+  warningEl.style.display = 'none';
+
+  if (currentUser.profile) {
+    const age = parseInt(currentUser.profile.age, 10);
+    const income = parseInt(currentUser.profile.income, 10);
+    const gender = currentUser.profile.gender;
+    const cat = currentUser.profile.category;
+    const occ = currentUser.profile.occupation;
+
+    let warnings = [];
+    const elig = scheme.eligibility;
+
+    if (age && (age < elig.minAge || age > elig.maxAge)) {
+      warnings.push(`Age: Scheme requires ${elig.minAge}-${elig.maxAge} years, you saved ${age} years.`);
+    }
+    if (elig.gender !== 'any' && gender && elig.gender !== gender) {
+      warnings.push(`Gender: Scheme is restricted to ${elig.gender}, you registered as ${gender}.`);
+    }
+    if (elig.maxIncome && income && income > elig.maxIncome) {
+      warnings.push(`Income: Maximum income allowed is ₹${elig.maxIncome}, you declared ₹${income}.`);
+    }
+    if (elig.categories && !elig.categories.includes('all') && cat && !elig.categories.includes(cat)) {
+      warnings.push(`Social Category: Scheme is for ${elig.categories.join(', ')}, your profile is ${cat}.`);
+    }
+    if (elig.occupations && !elig.occupations.includes('all') && occ && !elig.occupations.includes(occ)) {
+      warnings.push(`Occupation: Scheme fits ${elig.occupations.join(', ')}, you registered as ${occ}.`);
+    }
+
+    if (warnings.length > 0) {
+      warningEl.innerHTML = `<strong>⚠️ Eligibility Warning:</strong><br>${warnings.join('<br>')}`;
+      warningEl.style.display = 'block';
+    }
+  }
+
+  document.getElementById('applySchemeId').value = scheme.id;
+  document.getElementById('applySchemeName').value = currentLanguage === 'hi' ? scheme.name.hi : scheme.name.en;
+  document.getElementById('applyModalSubtitle').textContent = currentLanguage === 'hi' ? scheme.name.hi : scheme.name.en;
+  
+  document.getElementById('applyApplicantName').value = currentUser.username;
+  document.getElementById('applyAge').value = currentUser.profile.age || '';
+  document.getElementById('applyGender').value = currentUser.profile.gender || 'any';
+  document.getElementById('applyIncome').value = currentUser.profile.income || '';
+  document.getElementById('applyCategory').value = currentUser.profile.category || 'General';
+  document.getElementById('applyOccupation').value = currentUser.profile.occupation || 'general_public';
+
+  closeModal();
+  document.getElementById('applyModal').classList.add('active');
+};
+
+window.closeApplyModal = function() {
+  document.getElementById('applyModal').classList.remove('active');
+};
+
+// ==========================================
+// GRIEVANCE PORTAL LOGIC
+// ==========================================
+function setupGrievancePortal() {
+  const form = document.getElementById('grievanceForm');
+  const distSelect = document.getElementById('grievanceDistrict');
+  const cscSelect = document.getElementById('grievanceCsc');
+
+  distSelect.innerHTML = '';
+  districtList.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = currentLanguage === 'hi' ? d.nameHi : d.nameEn;
+    distSelect.appendChild(opt);
+  });
+
+  function populateCscCenters(districtId) {
+    cscSelect.innerHTML = '';
+    const centers = jskDatabase[districtId] || [];
+    if (centers.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = "General Center";
+      opt.textContent = currentLanguage === 'hi' ? "सामान्य / अन्य केंद्र" : "General / Other Center";
+      cscSelect.appendChild(opt);
+      return;
+    }
+    centers.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = `${c.name} (${c.tehsil})`;
+      cscSelect.appendChild(opt);
+    });
+  }
+
+  populateCscCenters(districtList[0].id);
+
+  distSelect.addEventListener('change', () => {
+    populateCscCenters(distSelect.value);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    const formData = new FormData();
+    formData.append('username', currentUser.username);
+    formData.append('district', distSelect.value);
+    formData.append('cscCenter', cscSelect.value);
+    formData.append('category', document.getElementById('grievanceCategory').value);
+    formData.append('description', document.getElementById('grievanceDesc').value.trim());
+
+    const fileInput = document.getElementById('grievanceFiles');
+    for (const file of fileInput.files) {
+      formData.append('attachments', file);
+    }
+
+    try {
+      const response = await fetch('/api/grievances/submit', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showToast("Grievance Filed", `Ticket raised successfully! ID: ${data.grievance.ticketId}`, "success");
+        document.getElementById('grievanceDesc').value = '';
+        fileInput.value = '';
+        await fetchUserGrievances();
+        setupAnalyticsDashboard();
+      } else {
+        showToast("Error", data.error || 'Submission failed.', "error");
+      }
+    } catch (err) {
+      showToast("Error", "Network connection issues.", "error");
+    }
+  });
+}
+
+async function fetchUserGrievances() {
+  if (!currentUser) return;
+  try {
+    const response = await fetch(`/api/grievances?username=${encodeURIComponent(currentUser.username)}`);
+    userGrievances = await response.json();
+    renderGrievancesList();
+  } catch (err) {
+    console.error("Failed to load user grievances:", err);
+  }
+}
+
+// Render complaints
+function renderGrievancesList() {
+  const container = document.getElementById('grievancesList');
+  container.innerHTML = '';
+
+  if (userGrievances.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding: 24px; color: var(--text-muted);" data-en="No grievances filed." data-hi="कोई शिकायत दर्ज नहीं की गई है।">${currentLanguage === 'hi' ? 'कोई शिकायत दर्ज नहीं की गई है।' : 'No grievances filed.'}</div>`;
+    return;
+  }
+
+  userGrievances.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'grievance-item-card';
+
+    const statusMap = {
+      'Open': currentLanguage === 'hi' ? 'खुला' : 'Open',
+      'In Progress': currentLanguage === 'hi' ? 'प्रगति में' : 'In Progress',
+      'Resolved': currentLanguage === 'hi' ? 'सुलझाया' : 'Resolved',
+      'Escalated': currentLanguage === 'hi' ? 'एस्केलेटेड' : 'Escalated',
+      'Rejected': currentLanguage === 'hi' ? 'अस्वीकृत' : 'Rejected'
+    };
+    const statusLabel = statusMap[g.status] || g.status;
+    const badgeClass = g.status.toLowerCase().replace(/\s+/g, '-');
+
+    let filesHtml = '';
+    if (g.files && g.files.length > 0) {
+      filesHtml = `<div style="margin-top:6px; font-size:0.75rem;">
+        <i class="fa-solid fa-paperclip"></i> ${g.files.map(f =>
+          `<a href="${f.path}" target="_blank" style="color:var(--accent-navy); text-decoration:underline; margin-right:8px;">${f.originalName}</a>`
+        ).join('')}
+      </div>`;
+    }
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="grievance-category">${g.category}</span>
+        <span class="grievance-status ${badgeClass}">${statusLabel}</span>
+      </div>
+      <div style="font-size:0.85rem; line-height:1.5; color: var(--text-primary); margin: 6px 0;">${g.description}</div>
+      ${filesHtml}
+      <div class="grievance-meta">
+        <span>${currentLanguage === 'hi' ? 'टिकट' : 'Ticket'}: <strong>${g.ticketId}</strong></span>
+        <span>Center: <strong>${g.cscCenter}</strong> (${g.district})</span>
+        <span>Date: ${g.date}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ==========================================
+// ADMIN ANALYTICS DASHBOARD LOGIC
+// ==========================================
+async function setupAnalyticsDashboard() {
+  try {
+    const response = await fetch('/api/analytics/data');
+    const data = await response.json();
+    if (response.ok && data.success) {
+      renderAnalyticsData(data.analytics);
+    }
+  } catch (err) {
+    console.error("Analytics fetch error:", err);
+  }
+}
+
+function renderAnalyticsData(analytics) {
+  document.getElementById('statCountUsers').textContent = analytics.counts.users;
+  document.getElementById('statCountApplications').textContent = analytics.counts.applications;
+  document.getElementById('statCountGrievances').textContent = analytics.counts.grievances;
+
+  const viewedContainer = document.getElementById('analyticsMostViewed');
+  viewedContainer.innerHTML = '';
+  
+  if (analytics.mostViewed.length === 0) {
+    viewedContainer.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; padding: 20px 0; text-align:center;">No views recorded yet.</p>`;
+  } else {
+    const maxViews = analytics.mostViewed[0].views || 1;
+    analytics.mostViewed.forEach(scheme => {
+      const name = currentLanguage === 'hi' ? scheme.nameHi : scheme.nameEn;
+      const pct = Math.max(10, (scheme.views / maxViews) * 100);
+      
+      const item = document.createElement('div');
+      item.className = 'chart-bar-container';
+      item.innerHTML = `
+        <div class="chart-bar-label">
+          <span>${name}</span>
+          <span>${scheme.views} views</span>
+        </div>
+        <div class="chart-bar-bg">
+          <div class="chart-bar-fill" style="width: ${pct}%"></div>
+        </div>
+      `;
+      viewedContainer.appendChild(item);
+    });
+  }
+
+  const distContainer = document.getElementById('analyticsDistricts');
+  distContainer.innerHTML = '';
+  
+  const distEntries = Object.entries(analytics.districtDistribution);
+  if (distEntries.length === 0) {
+    distContainer.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; padding: 20px 0; text-align:center;">No applications logged yet.</p>`;
+  } else {
+    distEntries.sort((a, b) => b[1] - a[1]);
+    const maxApps = distEntries[0][1] || 1;
+    
+    distEntries.forEach(([district, count]) => {
+      const pct = Math.max(10, (count / maxApps) * 100);
+      const districtLabel = currentLanguage === 'hi' ? getDistrictHindiName(district) : district;
+      
+      const item = document.createElement('div');
+      item.className = 'chart-bar-container';
+      item.innerHTML = `
+        <div class="chart-bar-label">
+          <span>${districtLabel}</span>
+          <span>${count} apps</span>
+        </div>
+        <div class="chart-bar-bg">
+          <div class="chart-bar-fill green" style="width: ${pct}%"></div>
+        </div>
+      `;
+      distContainer.appendChild(item);
+    });
+  }
+
+  setupSimulatorApplications();
+}
+
+function getDistrictHindiName(distId) {
+  const d = districtList.find(dist => dist.id === distId);
+  return d ? d.nameHi : distId;
+}
+
+async function setupSimulatorApplications() {
+  const select = document.getElementById('simAppSelect');
+  const btn = document.getElementById('btnSimUpdate');
+  
+  try {
+    const response = await fetch('/api/applications');
+    const apps = await response.json();
+    
+    const prevVal = select.value;
+    select.innerHTML = '<option value="">-- Select Application --</option>';
+    
+    if (apps.length === 0) {
+      btn.disabled = true;
+      return;
+    }
+    
+    btn.disabled = false;
+    apps.forEach(app => {
+      const opt = document.createElement('option');
+      opt.value = app.applicationId;
+      opt.textContent = `${app.applicationId} - ${app.applicantName} (${app.schemeName})`;
+      select.appendChild(opt);
+    });
+
+    if (prevVal) {
+      select.value = prevVal;
+    }
+    
+    if (!btn.dataset.bound) {
+      btn.addEventListener('click', async () => {
+        const appId = select.value;
+        const status = document.getElementById('simStatusSelect').value;
+        if (!appId) {
+          showToast("Validation Error", "Please select an application to update.", "warning");
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/applications/update-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ applicationId: appId, status })
+          });
+          const result = await res.json();
+          if (res.ok && result.success) {
+            showToast("Simulator Updated", `Successfully updated status of ${appId} to "${status}"`, "success");
+            await setupAnalyticsDashboard();
+            if (currentUser) {
+              await fetchUserApplications();
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      });
+      btn.dataset.bound = "true";
+    }
+  } catch (err) {
+    console.error("Simulator list error:", err);
+  }
 }

@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#FF9933">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="NagrikSeva">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
   <title>🪷 NagrikSeva - UP Citizen Assistance Platform</title>
   <!-- Google Fonts: Nunito (headings) + Lato (body) + Noto Sans Devanagari (Hindi) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,6 +95,31 @@
       </div>
       
       <div class="header-controls">
+        <!-- User Account Widget -->
+        <div class="user-account-widget" style="position: relative; margin-right: 12px;">
+          <button class="header-icon-btn" id="headerUserBtn" title="My Account" style="background: rgba(0,0,128,0.04); border: 1px solid var(--glass-border); padding: 10px; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-navy); transition: all var(--transition-fast); position: relative;">
+            <i class="fa-solid fa-user" id="headerUserIcon" style="font-size: 1.2rem;"></i>
+            <span class="user-dot" id="headerUserDot" style="position: absolute; bottom: 2px; right: 2px; background: var(--accent-green); border: 2px solid white; width: 10px; height: 10px; border-radius: 50%; display: none;"></span>
+          </button>
+        </div>
+
+        <!-- Notification Center -->
+        <div class="notification-center-container" style="position: relative; margin-right: 12px;">
+          <button class="header-icon-btn" id="notificationBtn" title="Alerts & Deadlines" style="background: rgba(0,0,128,0.04); border: 1px solid var(--glass-border); padding: 10px; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color: var(--accent-navy); transition: all var(--transition-fast);">
+            <i class="fa-solid fa-bell" style="font-size: 1.2rem;"></i>
+            <span class="badge" id="notificationBadge" style="position: absolute; top: -2px; right: -2px; background: var(--accent-saffron); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid white; display: none;">0</span>
+          </button>
+          <div class="notification-dropdown glass-card" id="notificationDropdown" style="position: absolute; top: 52px; right: 0; width: 320px; max-height: 400px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; z-index: 1000; padding: 16px;">
+            <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(0,0,128,0.06); padding-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-primary);" data-en="Upcoming Deadlines" data-hi="आगामी समय सीमा">Upcoming Deadlines</h4>
+              <button id="btnRequestPush" style="font-size: 0.72rem; color: var(--accent-saffron); cursor: pointer; border: none; background: transparent; font-weight: 700;" data-en="Enable Push" data-hi="पुश सक्षम करें">Enable Push</button>
+            </div>
+            <ul id="notificationList" class="notification-list" style="list-style: none; display: flex; flex-direction: column; gap: 8px;">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+        </div>
+
         <!-- Language Switcher -->
         <div class="lang-toggle" id="langToggle">
           <button class="lang-btn active" data-lang="en">EN</button>
@@ -97,7 +128,6 @@
       </div>
     </header>
 
-    <!-- Navigation Tabs -->
     <nav class="nav-tabs">
       <button class="tab-link active" data-target="home-panel">
         <i class="fa-solid fa-house"></i> <span data-en="Home" data-hi="मुख्य पृष्ठ">Home</span>
@@ -111,8 +141,15 @@
       <button class="tab-link" data-target="roadmaps-panel">
         <i class="fa-solid fa-route"></i> <span data-en="Service Roadmaps" data-hi="सेवा रोडमैप">Service Roadmaps</span>
       </button>
-      <button class="tab-link" data-target="chat-panel">
-        <i class="fa-solid fa-comments"></i> <span data-en="SevaMitra AI" data-hi="सेवामित्र एआई">SevaMitra AI</span>
+
+      <button class="tab-link" data-target="grievance-panel">
+        <i class="fa-solid fa-triangle-exclamation"></i> <span data-en="Grievance" data-hi="शिकायत पोर्टल">Grievance</span>
+      </button>
+      <button class="tab-link" data-target="analytics-panel">
+        <i class="fa-solid fa-chart-simple"></i> <span data-en="Analytics" data-hi="डैशबोर्ड">Analytics</span>
+      </button>
+      <button class="tab-link" data-target="user-panel" id="userTabLink" style="display: none;">
+        <i class="fa-solid fa-circle-user"></i> <span data-en="Account" data-hi="खाता" id="userTabLabel">Account</span>
       </button>
     </nav>
 
@@ -125,21 +162,26 @@
           
           <div class="glass-card welcome-hero">
             <h2 class="card-title-lg" data-en="Welcome to NagrikSeva" data-hi="नागरिकसेवा में आपका स्वागत है">Welcome to NagrikSeva</h2>
-            <p class="card-desc" data-en="Your digital window to all welfare schemes, documents, and public services in Uttar Pradesh. Check your eligibility, navigate application roadmaps, and chat with our AI assistant to get instant answers." data-hi="उत्तर प्रदेश की सभी कल्याणकारी योजनाओं, दस्तावेजों और सार्वजनिक सेवाओं के लिए आपकी डिजिटल खिड़की। अपनी पात्रता की जांच करें, आवेदन रोडमैप देखें, और त्वरित उत्तर प्राप्त करने के लिए हमारे एआई सहायक से चैट करें।">Your digital window to all welfare schemes, documents, and public services in Uttar Pradesh. Check your eligibility, navigate application roadmaps, and chat with our AI assistant to get instant answers.</p>
+            <p class="card-desc" data-en="Our digital window to welfare schemes, government services, and citizen support in Uttar Pradesh. Check your eligibility, navigate application roadmaps, locate service centers, raise grievances, and chat with our AI assistant to get instant answers." data-hi="उत्तर प्रदेश में कल्याणकारी योजनाओं, सरकारी सेवाओं और नागरिक सहायता के लिए हमारी डिजिटल खिड़की। अपनी पात्रता की जांच करें, आवेदन रोडमैप नेविगेट करें, सेवा केंद्र ढूंढें, शिकायतें दर्ज करें, और त्वरित उत्तर पाने के लिए हमारे एआई सहायक से चैट करें।">Our digital window to welfare schemes, government services, and citizen support in Uttar Pradesh. Check your eligibility, navigate application roadmaps, locate service centers, raise grievances, and chat with our AI assistant to get instant answers.</p>
             
             <div class="features-grid">
+              <div class="feature-mini-card" onclick="switchTab('schemes-panel')">
+                <i class="fa-solid fa-list-check" style="color: var(--accent-saffron);"></i>
+                <h3 data-en="Browse Schemes" data-hi="योजनाएं ब्राउज़ करें">Browse Schemes</h3>
+                <p data-en="Explore 30+ welfare schemes and services across UP" data-hi="यूपी भर में 30+ कल्याणकारी योजनाओं और सेवाओं की खोज करें">Explore 30+ welfare schemes and services across UP</p>
+              </div>
               <div class="feature-mini-card" onclick="switchTab('eligibility-panel')">
-                <i class="fa-solid fa-id-card-clip"></i>
+                <i class="fa-solid fa-id-card-clip" style="color: var(--accent-navy);"></i>
                 <h3 data-en="Eligibility Quiz" data-hi="पात्रता प्रश्नोत्तरी">Eligibility Quiz</h3>
                 <p data-en="Find matching schemes based on your profile" data-hi="अपने प्रोफाइल के आधार पर योजनाएं खोजें">Find matching schemes based on your profile</p>
               </div>
               <div class="feature-mini-card" onclick="switchTab('roadmaps-panel')">
-                <i class="fa-solid fa-map-signs"></i>
+                <i class="fa-solid fa-map-signs" style="color: var(--accent-green);"></i>
                 <h3 data-en="Step Roadmaps" data-hi="चरण-दर-चरण रोडमैप">Step Roadmaps</h3>
                 <p data-en="Detailed paths for licenses & documents" data-hi="दस्तावेजों और लाइसेंस के लिए स्पष्ट मार्ग">Detailed paths for licenses & documents</p>
               </div>
-              <div class="feature-mini-card" onclick="switchTab('chat-panel')">
-                <i class="fa-solid fa-microphone-lines"></i>
+              <div class="feature-mini-card" onclick="document.getElementById('chatBubbleBtn').click()">
+                <i class="fa-solid fa-comments" style="color: var(--accent-saffron);"></i>
                 <h3 data-en="AI SevaMitra" data-hi="एआई सेवामित्र">AI SevaMitra</h3>
                 <p data-en="Voice & text assistant speaking Hindi & English" data-hi="हिन्दी और अंग्रेजी में उत्तर देने वाला सहायक">Voice & text assistant speaking Hindi & English</p>
               </div>
@@ -203,6 +245,15 @@
             </div>
           </div>
         </div>
+
+        <!-- Grievance CTA Banner -->
+        <div class="glass-card grievance-cta-banner" style="margin-top: 24px; background: rgba(220, 38, 38, 0.04); border: 1px solid rgba(220, 38, 38, 0.12); display: flex; justify-content: center; align-items: center; gap: 12px; padding: 16px 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); text-align: center; flex-wrap: wrap;">
+          <i class="fa-solid fa-circle-exclamation" style="color: #DC2626; font-size: 1.1rem;"></i>
+          <span style="font-size: 0.95rem; color: #991B1B; font-weight: 600;" data-en="Facing an issue with a scheme or application? File a grievance. &rarr;" data-hi="योजना या आवेदन में समस्या आ रही है? शिकायत दर्ज करें। &rarr;">Facing an issue with a scheme or application? File a grievance. &rarr;</span>
+          <button class="btn btn-primary" onclick="switchTab('grievance-panel')" style="background: #DC2626; color: white; border: none; font-weight: 700; padding: 6px 18px; font-size: 0.85rem; border-radius: var(--radius-sm); box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2); cursor: pointer;" data-en="File now" data-hi="अभी दर्ज करें">
+            File now
+          </button>
+        </div>
       </section>
 
       <!-- 2. SCHEMES PANEL -->
@@ -229,7 +280,6 @@
               <button class="filter-chip" data-category="occ:widow" data-en="Widow" data-hi="विधवा"><i class="fa-solid fa-hand-holding-heart"></i> Widow</button>
               <button class="filter-chip" data-category="occ:pregnant_woman" data-en="Pregnant Woman" data-hi="गर्भवती महिला"><i class="fa-solid fa-baby"></i> Pregnant</button>
               <button class="filter-chip" data-category="occ:disabled" data-en="Disabled (Divyang)" data-hi="दिव्यांग"><i class="fa-solid fa-wheelchair"></i> Divyang</button>
-              <button class="filter-chip" data-category="essential-documents" data-en="Documents" data-hi="प्रमाण पत्र">Documents</button>
             </div>
           </div>
 
@@ -360,41 +410,276 @@
         </div>
       </section>
 
-      <!-- 5. CHAT ASSISTANT PANEL -->
-      <section class="tab-panel" id="chat-panel">
-        <div class="chat-wrapper">
-          <div class="chat-header-bar">
-            <div class="chat-bot-details">
-              <div class="chat-bot-avatar">SM</div>
-              <div class="chat-bot-status">
-                <h4 data-en="SevaMitra AI" data-hi="सेवामित्र एआई">SevaMitra AI</h4>
-                <span data-en="Online Assistance" data-hi="ऑनलाइन सहायता">Online Assistance</span>
+
+
+      <!-- 6. GRIEVANCE PORTAL PANEL -->
+      <section class="tab-panel" id="grievance-panel">
+        <div class="glass-card">
+          <h2 class="card-title-lg" data-en="Grievance Redressal Portal" data-hi="शिकायत निवारण पोर्टल">Grievance Redressal Portal</h2>
+          <p class="card-desc" data-en="File complaints against Common Service Centers (CSC) / Jan Seva Kendras for overcharging, delays, or service denials, and track resolution status." data-hi="अधिक शुल्क लेने, देरी करने या सेवा से इनकार करने के लिए जन सेवा केंद्रों (CSC) के खिलाफ शिकायत दर्ज करें और समाधान की स्थिति को ट्रैक करें।">File complaints against Common Service Centers (CSC) / Jan Seva Kendras for overcharging, delays, or service denials, and track resolution status.</p>
+
+          <div class="auth-required-banner" id="grievanceAuthAlert" style="margin-bottom: 20px;">
+            <div class="alert alert-info" style="display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: var(--radius-md); background: rgba(0, 0, 128, 0.04); border: 1px solid var(--glass-border);">
+              <i class="fa-solid fa-circle-info" style="font-size: 1.5rem; color: var(--accent-navy);"></i>
+              <div>
+                <strong data-en="Authentication Required" data-hi="लॉगिन आवश्यक है" style="display: block; margin-bottom: 4px;">Authentication Required</strong>
+                <span data-en="Please login or register a user account to lodge and track complaints." data-hi="शिकायतें दर्ज करने और ट्रैक करने के लिए कृपया लॉगिन करें या एक खाता पंजीकृत करें।">Please login or register a user account to lodge and track complaints.</span>
+                <button class="btn btn-primary" onclick="switchTab('user-panel')" style="margin-top: 8px; padding: 6px 12px; font-size: 0.85rem; display: block;" data-en="Go to Login" data-hi="लॉगिन पर जाएं">Go to Login</button>
               </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <!-- TTS helper button -->
-              <button class="chat-action-btn" id="btnToggleSpeech" title="Read responses aloud">
-                <i class="fa-solid fa-volume-high"></i> <span data-en="Read Aloud" data-hi="बोलकर पढ़ें">Read Aloud</span>
-              </button>
+          </div>
+
+          <div class="grievance-content-grid" id="grievanceContent" style="display: none; grid-template-columns: 1.2fr 1.8fr; gap: 24px;">
+            <!-- Lodge form -->
+            <div class="glass-card" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(0,0,128,0.04); padding: 20px;">
+              <h3 style="margin-bottom: 16px; color: var(--accent-navy);" data-en="Lodge a Complaint" data-hi="शिकायत दर्ज करें">Lodge a Complaint</h3>
+              <form id="grievanceForm">
+                <div class="form-group">
+                  <label for="grievanceDistrict" data-en="District" data-hi="जिला">District</label>
+                  <select class="form-control" id="grievanceDistrict" required>
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="grievanceCsc" data-en="Select CSC Center" data-hi="जन सेवा केंद्र चुनें">Select CSC Center</label>
+                  <select class="form-control" id="grievanceCsc" required>
+                    <!-- Populated dynamically based on district -->
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="grievanceCategory" data-en="Complaint Category" data-hi="शिकायत की श्रेणी">Complaint Category</label>
+                  <select class="form-control" id="grievanceCategory" required>
+                    <option value="Overcharging" data-en="Overcharging (Exceeding Gov fees)" data-hi="अधिक शुल्क लेना">Overcharging (Exceeding Gov fees)</option>
+                    <option value="Delay" data-en="Undue Delay / Ignored application" data-hi="अनावश्यक देरी">Undue Delay / Ignored application</option>
+                    <option value="Denial" data-en="Denial of Service" data-hi="सेवा देने से मना करना">Denial of Service</option>
+                    <option value="Misbehavior" data-en="Misbehavior by Operator" data-hi="अभद्र व्यवहार">Misbehavior by Operator</option>
+                    <option value="Other" data-en="Other issue" data-hi="अन्य समस्या">Other issue</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="grievanceDesc" data-en="Description of Issue" data-hi="समस्या का विवरण">Description of Issue</label>
+                  <textarea class="form-control" id="grievanceDesc" rows="4" style="resize: vertical; width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;" placeholder="Provide details of your experience..." required data-en-placeholder="Provide details..." data-hi-placeholder="विवरण प्रदान करें..."></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="grievanceFiles" data-en="Supporting Documents (optional)" data-hi="सहायक दस्तावेज (वैकल्पिक)">Supporting Documents (optional)</label>
+                  <input type="file" class="form-control" id="grievanceFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="padding: 8px; font-size: 0.85rem;">
+                  <small style="color: var(--text-muted); font-size: 0.75rem;" data-en="Max 3 files, up to 5MB each (PDF, JPG, PNG, DOC)" data-hi="अधिकतम 3 फ़ाइलें, प्रत्येक 5MB तक (PDF, JPG, PNG, DOC)">Max 3 files, up to 5MB each (PDF, JPG, PNG, DOC)</small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;" data-en="Submit Grievance" data-hi="शिकायत दर्ज करें">Submit Grievance</button>
+              </form>
+            </div>
+
+            <!-- Grievance History -->
+            <div>
+              <h3 style="margin-bottom: 16px; color: var(--accent-navy);" data-en="My Filed Complaints" data-hi="मेरी दर्ज शिकायतें">My Filed Complaints</h3>
+              <div id="grievancesList" style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. ANALYTICS DASHBOARD PANEL -->
+      <section class="tab-panel" id="analytics-panel">
+        <div class="glass-card">
+          <h2 class="card-title-lg" data-en="Administrative Analytics & Tracking" data-hi="प्रशासनिक विश्लेषण और ट्रैकिंग">Administrative Analytics & Tracking</h2>
+          <p class="card-desc" data-en="Real-time telemetry showing application volumes, district loads, and scheme popularity across Uttar Pradesh." data-hi="उत्तर प्रदेश में आवेदन मात्रा, जिला लोड और योजना लोकप्रियता दिखाने वाला रीयल-टाइम डेटा।">Real-time telemetry showing application volumes, district loads, and scheme popularity across Uttar Pradesh.</p>
+
+          <!-- Top counts -->
+          <div class="stats-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px;">
+            <div class="glass-card" style="padding: 20px; text-align: center; border-left: 5px solid var(--accent-saffron); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); background: var(--glass-card);">
+              <h4 style="color: var(--text-secondary); font-size: 0.9rem;" data-en="Total Registered Users" data-hi="कुल पंजीकृत उपयोगकर्ता">Total Registered Users</h4>
+              <p id="statCountUsers" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-navy); margin-top: 8px;">0</p>
+            </div>
+            <div class="glass-card" style="padding: 20px; text-align: center; border-left: 5px solid var(--accent-green); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); background: var(--glass-card);">
+              <h4 style="color: var(--text-secondary); font-size: 0.9rem;" data-en="Submitted Applications" data-hi="जमा किए गए आवेदन">Submitted Applications</h4>
+              <p id="statCountApplications" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-navy); margin-top: 8px;">0</p>
+            </div>
+            <div class="glass-card" style="padding: 20px; text-align: center; border-left: 5px solid var(--accent-navy); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); background: var(--glass-card);">
+              <h4 style="color: var(--text-secondary); font-size: 0.9rem;" data-en="Grievances Filed" data-hi="कुल शिकायतें">Grievances Filed</h4>
+              <p id="statCountGrievances" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-navy); margin-top: 8px;">0</p>
             </div>
           </div>
 
-          <!-- Messages body -->
-          <div class="chat-messages" id="chatMessages">
-            <div class="message bot">
-              <p data-en="Hello! I am SevaMitra, your UP citizen schemes guide. How can I help you today?" data-hi="नमस्ते! मैं सेवामित्र हूँ, आपका यूपी नागरिक योजना गाइड। आज मैं आपकी क्या सहायता कर सकता हूँ?">Hello! I am SevaMitra, your UP citizen schemes guide. How can I help you today?</p>
+          <!-- Charts -->
+          <div class="charts-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div class="glass-card" style="padding: 20px; background: rgba(255,255,255,0.4); border: 1px solid rgba(0,0,128,0.04); border-radius: var(--radius-md);">
+              <h3 style="margin-bottom: 16px; font-size: 1.1rem; color: var(--accent-navy);" data-en="🔥 Top 5 Most Viewed Schemes" data-hi="🔥 शीर्ष 5 सर्वाधिक देखी गई योजनाएं">🔥 Top 5 Most Viewed Schemes</h3>
+              <div id="analyticsMostViewed" style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Rendered dynamically with progress bars -->
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding: 20px; background: rgba(255,255,255,0.4); border: 1px solid rgba(0,0,128,0.04); border-radius: var(--radius-md);">
+              <h3 style="margin-bottom: 16px; font-size: 1.1rem; color: var(--accent-navy);" data-en="📍 Applications by District" data-hi="📍 जिलेवार आवेदनों की संख्या">📍 Applications by District</h3>
+              <div id="analyticsDistricts" style="display: flex; flex-direction: column; gap: 14px; max-height: 250px; overflow-y: auto;">
+                <!-- Rendered dynamically -->
+              </div>
             </div>
           </div>
 
-          <!-- Inputs -->
-          <div class="chat-input-bar">
-            <button class="voice-input-btn" id="btnVoiceInput" title="Speak in Hindi/English">
-              <i class="fa-solid fa-microphone"></i>
+          <!-- Admin Simulation Tools -->
+          <div class="glass-card" style="margin-top: 24px; padding: 20px; border: 1px dashed var(--accent-saffron); background: rgba(255, 153, 51, 0.02); border-radius: var(--radius-md);">
+            <h3 style="margin-bottom: 12px; color: var(--accent-saffron-dark); font-size: 1.1rem;" data-en="🛠️ Administrative Demonstration Simulator" data-hi="🛠️ प्रशासनिक प्रदर्शन सिम्युलेटर">🛠️ Administrative Demonstration Simulator</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;" data-en="Use this developer tool to approve/reject or review active citizen applications in real-time to test the Application Tracker progress bars." data-hi="आवेदन ट्रैकर के प्रगति बारों का परीक्षण करने के लिए वास्तविक समय में सक्रिय नागरिक आवेदनों को स्वीकृत/अस्वीकृत या समीक्षा करने के लिए इस डेवलपर टूल का उपयोग करें।">Use this developer tool to approve/reject or review active citizen applications in real-time to test the Application Tracker progress bars.</p>
+            
+            <div class="sim-row" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+              <div class="form-group" style="flex: 1; min-width: 250px;">
+                <label for="simAppSelect" data-en="Select Citizen Application" data-hi="नागरिक आवेदन चुनें" style="display: block; margin-bottom: 6px; font-size: 0.85rem;">Select Citizen Application</label>
+                <select id="simAppSelect" class="form-control" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                  <option value="" data-en="-- No Applications --" data-hi="-- कोई आवेदन नहीं --">-- No Applications --</option>
+                </select>
+              </div>
+              <div class="form-group" style="width: 200px;">
+                <label for="simStatusSelect" data-en="Change Status To" data-hi="स्थिति बदलें" style="display: block; margin-bottom: 6px; font-size: 0.85rem;">Change Status To</label>
+                <select id="simStatusSelect" class="form-control" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                  <option value="Submitted" data-en="Submitted" data-hi="प्रस्तुत">Submitted</option>
+                  <option value="Under Review" data-en="Under Review" data-hi="समीक्षाधीन">Under Review</option>
+                  <option value="Approved" data-en="Approved" data-hi="स्वीकृत">Approved</option>
+                  <option value="Rejected" data-en="Rejected" data-hi="अस्वीकृत">Rejected</option>
+                </select>
+              </div>
+              <button id="btnSimUpdate" class="btn btn-primary" style="padding: 12px 20px; font-weight: 700; cursor: pointer;" data-en="Update Status" data-hi="स्थिति अपडेट करें">Update Status</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. USER ACCOUNTS PANEL -->
+      <section class="tab-panel" id="user-panel">
+        <!-- Out: Auth Form -->
+        <div id="authFormContainer" class="glass-card" style="max-width: 500px; margin: 40px auto; padding: 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl);">
+          <div class="auth-tabs" style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid rgba(0,0,128,0.06); padding-bottom: 12px;">
+            <button id="authTabLogin" class="btn-clear active" style="font-size: 1.25rem; font-weight: 700; color: var(--accent-navy); cursor: pointer; border: none; background: transparent; padding: 4px 16px; transition: all var(--transition-fast);" data-en="Login" data-hi="लॉगिन">Login</button>
+            <button id="authTabRegister" class="btn-clear" style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted); cursor: pointer; border: none; background: transparent; padding: 4px 16px; transition: all var(--transition-fast);" data-en="Register" data-hi="पंजीकरण">Register</button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="loginUsername" data-en="Username" data-hi="उपयोगकर्ता नाम" style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Username</label>
+              <input type="text" class="form-control" id="loginUsername" placeholder="e.g. citizen123" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="form-group" style="margin-top: 16px;">
+              <label for="loginPassword" data-en="Password" data-hi="पासवर्ड" style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Password</label>
+              <input type="password" class="form-control" id="loginPassword" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="alert alert-warning" id="loginError" style="margin-top: 16px; display: none; background: rgba(230, 50, 50, 0.1); border: 1px solid rgba(230, 50, 50, 0.2); color: #d32f2f; padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem;"></div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px; font-weight: 700; padding: 12px;" data-en="Login to Dashboard" data-hi="डैशबोर्ड में लॉग इन करें">Login to Dashboard</button>
+          </form>
+
+          <!-- Register Form (hidden) -->
+          <form id="registerForm" style="display: none;">
+            <div class="form-group">
+              <label for="regUsername" data-en="Choose Username" data-hi="उपयोगकर्ता नाम चुनें" style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Choose Username</label>
+              <input type="text" class="form-control" id="regUsername" placeholder="e.g. rajkumar" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+              <label for="regEmail" data-en="Email Address" data-hi="ईमेल पता" style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Email Address</label>
+              <input type="email" class="form-control" id="regEmail" placeholder="e.g. raj@gmail.com" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+              <label for="regPassword" data-en="Password" data-hi="पासवर्ड" style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Password</label>
+              <input type="password" class="form-control" id="regPassword" placeholder="Minimum 6 characters" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="form-group" style="margin-top: 12px;">
+              <label for="regPasswordConfirm" data-en="Confirm Password" data-hi="पासवर्ड की पुष्टि करें" style="display: block; margin-bottom: 6px; font-size: 0.9rem;">Confirm Password</label>
+              <input type="password" class="form-control" id="regPasswordConfirm" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="alert alert-warning" id="regError" style="margin-top: 16px; display: none; background: rgba(230, 50, 50, 0.1); border: 1px solid rgba(230, 50, 50, 0.2); color: #d32f2f; padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem;"></div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px; font-weight: 700; padding: 12px;" data-en="Create Account" data-hi="खाता बनाएं">Create Account</button>
+          </form>
+        </div>
+
+        <!-- In: User Dashboard (hidden) -->
+        <div id="userDashboardContainer" style="display: none; display: flex; flex-direction: column; gap: 24px;">
+          <!-- Welcome and logout -->
+          <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-radius: var(--radius-md);">
+            <div>
+              <h2 style="margin: 0; color: var(--accent-navy);" id="userDashboardWelcome">Welcome, Citizen!</h2>
+              <p style="color: var(--text-secondary); font-size: 0.85rem;" id="userDashboardEmail">citizen@nagrikseva.up.gov.in</p>
+            </div>
+            <button class="btn btn-secondary" id="btnLogout">
+              <i class="fa-solid fa-right-from-bracket"></i> <span data-en="Logout" data-hi="लॉगआउट">Logout</span>
             </button>
-            <input type="text" class="chat-input" id="chatInput" placeholder="Ask me something..." data-en-placeholder="Ask me something..." data-hi-placeholder="मुझसे कुछ पूछें...">
-            <button class="btn btn-primary" id="btnChatSend">
-              <i class="fa-solid fa-paper-plane"></i>
-            </button>
+          </div>
+
+          <!-- Profile Editor & Bookmarks Grid -->
+          <div class="dashboard-grid" style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 24px;">
+            <!-- Profile Editor -->
+            <div class="glass-card" style="padding: 24px; border-radius: var(--radius-md);">
+              <h3 style="margin-bottom: 12px; color: var(--accent-navy);" data-en="Saved Eligibility Profile" data-hi="सुरक्षित पात्रता प्रोफ़ाइल">Saved Eligibility Profile</h3>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;" data-en="Keep your details updated. This profile automates eligibility matching and autofills online applications." data-hi="अपने विवरण को अपडेट रखें। यह प्रोफ़ाइल पात्रता मिलान को स्वचालित करती है और ऑनलाइन आवेदनों को स्वतः भरती है।">Keep your details updated. This profile automates eligibility matching and autofills online applications.</p>
+              
+              <form id="profileForm">
+                <div class="form-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div class="form-group">
+                    <label for="profileAge" data-en="Age (Years)" data-hi="आयु (वर्ष)" style="display: block; margin-bottom: 6px;">Age (Years)</label>
+                    <input type="number" class="form-control" id="profileAge" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                  </div>
+                  <div class="form-group">
+                    <label for="profileGender" data-en="Gender" data-hi="लिंग" style="display: block; margin-bottom: 6px;">Gender</label>
+                    <select class="form-control" id="profileGender" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                      <option value="male" data-en="Male" data-hi="पुरुष">Male</option>
+                      <option value="female" data-en="Female" data-hi="महिला">Female</option>
+                      <option value="any" data-en="Other" data-hi="अन्य">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                  <div class="form-group">
+                    <label for="profileIncome" data-en="Annual Household Income (₹)" data-hi="वार्षिक पारिवारिक आय (₹)" style="display: block; margin-bottom: 6px;">Annual Household Income (₹)</label>
+                    <input type="number" class="form-control" id="profileIncome" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                  </div>
+                  <div class="form-group">
+                    <label for="profileCategory" data-en="Social Category" data-hi="सामाजिक श्रेणी" style="display: block; margin-bottom: 6px;">Social Category</label>
+                    <select class="form-control" id="profileCategory" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                      <option value="General" data-en="General" data-hi="सामान्य">General</option>
+                      <option value="OBC" data-en="OBC" data-hi="ओबीसी">OBC</option>
+                      <option value="SC" data-en="SC" data-hi="एससी">SC</option>
+                      <option value="ST" data-en="ST" data-hi="एसटी">ST</option>
+                      <option value="Minority" data-en="Minority" data-hi="अल्पसंख्यक">Minority</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="profileOccupation" data-en="Primary Occupation" data-hi="मुख्य व्यवसाय" style="display: block; margin-bottom: 6px;">Primary Occupation</label>
+                  <select class="form-control" id="profileOccupation" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                    <option value="general_public" data-en="General Citizen" data-hi="सामान्य नागरिक">General Citizen</option>
+                    <option value="student" data-en="Student" data-hi="छात्र">Student</option>
+                    <option value="farmer" data-en="Farmer" data-hi="किसान">Farmer</option>
+                    <option value="unemployed" data-en="Unemployed" data-hi="बेरोजगार">Unemployed</option>
+                    <option value="business_owner" data-en="Business Owner" data-hi="व्यवसाय के मालिक">Business Owner</option>
+                    <option value="laborer" data-en="Laborer" data-hi="मजदूर">Laborer</option>
+                    <option value="pregnant_woman" data-en="Pregnant Woman" data-hi="गर्भवती महिला">Pregnant Woman</option>
+                    <option value="widow" data-en="Widow" data-hi="विधवा">Widow</option>
+                    <option value="disabled" data-en="Disabled (Divyang)" data-hi="दिव्यांग">Disabled (Divyang)</option>
+                  </select>
+                </div>
+                
+                <div class="alert alert-success" id="profileSuccess" style="margin-top: 16px; display: none; background: rgba(19, 136, 8, 0.1); border: 1px solid rgba(19, 136, 8, 0.2); color: #0d6b06; padding: 10px; border-radius: var(--radius-sm); font-size: 0.85rem;"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;" data-en="Save Profile" data-hi="प्रोफ़ाइल सहेजें">Save Profile</button>
+              </form>
+            </div>
+
+            <!-- Bookmarks -->
+            <div class="glass-card" style="padding: 24px; border-radius: var(--radius-md);">
+              <h3 style="margin-bottom: 16px; color: var(--accent-navy);" data-en="Bookmarked Schemes" data-hi="सहेजी गई योजनाएं">Bookmarked Schemes</h3>
+              <div id="userBookmarksList" style="display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Application History -->
+          <div class="glass-card" style="padding: 24px; border-radius: var(--radius-md);">
+            <h3 style="margin-bottom: 16px; color: var(--accent-navy);" data-en="Application Status & History" data-hi="आवेदन स्थिति और इतिहास">Application Status & History</h3>
+            <div id="userApplicationsList" style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Filled dynamically -->
+            </div>
           </div>
         </div>
       </section>
@@ -412,6 +697,139 @@
       </div>
     </div>
   </div>
+
+  <!-- Application Submission Modal (Glassmorphic) -->
+  <div class="modal-overlay" id="applyModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <button class="modal-close" onclick="closeApplyModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-body">
+        <h2 id="applyModalTitle" data-en="Submit Scheme Application" data-hi="योजना आवेदन जमा करें" style="color: var(--accent-navy); font-size: 1.45rem; margin-bottom: 4px;">Submit Scheme Application</h2>
+        <p id="applyModalSubtitle" style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 700;">Scheme Name</p>
+        
+        <form id="schemeApplicationForm">
+          <input type="hidden" id="applySchemeId">
+          <input type="hidden" id="applySchemeName">
+          
+          <div class="form-group">
+            <label for="applyApplicantName" data-en="Applicant Full Name" data-hi="आवेदक का पूरा नाम" style="display: block; margin-bottom: 6px; font-weight: 700;">Applicant Full Name</label>
+            <input type="text" class="form-control" id="applyApplicantName" required placeholder="e.g. Rajesh Kumar" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+          </div>
+          
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="applyDistrict" data-en="District" data-hi="जिला" style="display: block; margin-bottom: 6px; font-weight: 700;">District</label>
+            <select class="form-control" id="applyDistrict" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+              <!-- Filled dynamically by JS -->
+            </select>
+          </div>
+
+          <h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 1rem; color: var(--accent-navy); border-bottom: 1px solid rgba(0,0,128,0.06); padding-bottom: 6px;" data-en="Verify Profile Details" data-hi="प्रोफ़ाइल विवरण सत्यापित करें">Verify Profile Details</h3>
+          
+          <div class="form-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="applyAge" data-en="Age" data-hi="आयु" style="display: block; margin-bottom: 6px;">Age</label>
+              <input type="number" class="form-control" id="applyAge" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="form-group">
+              <label for="applyGender" data-en="Gender" data-hi="लिंग" style="display: block; margin-bottom: 6px;">Gender</label>
+              <select class="form-control" id="applyGender" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                <option value="male" data-en="Male" data-hi="पुरुष">Male</option>
+                <option value="female" data-en="Female" data-hi="महिला">Female</option>
+                <option value="any" data-en="Other" data-hi="अन्य">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+            <div class="form-group">
+              <label for="applyIncome" data-en="Annual Income (₹)" data-hi="वार्षिक आय (₹)" style="display: block; margin-bottom: 6px;">Annual Income (₹)</label>
+              <input type="number" class="form-control" id="applyIncome" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+            </div>
+            <div class="form-group">
+              <label for="applyCategory" data-en="Social Category" data-hi="सामाजिक श्रेणी" style="display: block; margin-bottom: 6px;">Social Category</label>
+              <select class="form-control" id="applyCategory" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+                <option value="General" data-en="General" data-hi="सामान्य">General</option>
+                <option value="OBC" data-en="OBC" data-hi="ओबीसी">OBC</option>
+                <option value="SC" data-en="SC" data-hi="एससी">SC</option>
+                <option value="ST" data-en="ST" data-hi="एसटी">ST</option>
+                <option value="Minority" data-en="Minority" data-hi="अल्पसंख्यक">Minority</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 12px;">
+            <label for="applyOccupation" data-en="Occupation" data-hi="व्यवसाय" style="display: block; margin-bottom: 6px;">Occupation</label>
+            <select class="form-control" id="applyOccupation" required style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); padding: 10px;">
+              <option value="general_public" data-en="General Citizen" data-hi="सामान्य नागरिक">General Citizen</option>
+              <option value="student" data-en="Student" data-hi="छात्र">Student</option>
+              <option value="farmer" data-en="Farmer" data-hi="किसान">Farmer</option>
+              <option value="unemployed" data-en="Unemployed" data-hi="बेरोजगार">Unemployed</option>
+              <option value="business_owner" data-en="Business Owner" data-hi="व्यवसाय के मालिक">Business Owner</option>
+              <option value="laborer" data-en="Laborer" data-hi="मजदूर">Laborer</option>
+              <option value="pregnant_woman" data-en="Pregnant Woman" data-hi="गर्भवती महिला">Pregnant Woman</option>
+              <option value="widow" data-en="Widow" data-hi="विधवा">Widow</option>
+              <option value="disabled" data-en="Disabled (Divyang)" data-hi="दिव्यांग">Disabled (Divyang)</option>
+            </select>
+          </div>
+
+          <div class="alert alert-warning" id="applyWarningMessage" style="margin-top: 16px; display: none;"></div>
+
+          <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="button" class="btn btn-secondary" onclick="closeApplyModal()" style="flex: 1;" data-en="Cancel" data-hi="रद्द करें">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="flex: 2; font-weight: 700;" data-en="Submit Application" data-hi="आवेदन सबमिट करें">Submit Application</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating SevaMitra AI Chat Bubble and Window -->
+  <div class="floating-chat-container">
+    <button class="chat-bubble-btn" id="chatBubbleBtn" title="Chat with SevaMitra AI">
+      <i class="fa-solid fa-comments"></i>
+      <span class="bubble-pulse"></span>
+    </button>
+    
+    <div class="floating-chat-window glass-card" id="floatingChatWindow">
+      <div class="chat-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(0,0,128,0.04); border-bottom: 1px solid var(--glass-border);">
+        <div class="chat-bot-details" style="display: flex; align-items: center; gap: 10px;">
+          <div class="chat-bot-avatar" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-saffron) 0%, var(--accent-saffron-dark) 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; box-shadow: var(--shadow-sm);">SM</div>
+          <div class="chat-bot-status" style="display: flex; flex-direction: column;">
+            <h4 style="margin: 0; font-size: 0.9rem; color: var(--accent-navy);" data-en="SevaMitra AI" data-hi="सेवामित्र एआई">SevaMitra AI</h4>
+            <span style="font-size: 0.7rem; color: var(--accent-green); font-weight: 700;" data-en="Online Assistant" data-hi="ऑनलाइन सहायक">Online Assistant</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="chat-action-btn-mini" id="btnToggleSpeech" title="Read responses aloud" style="background: transparent; border: none; cursor: pointer; color: var(--text-secondary); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+            <i class="fa-solid fa-volume-high"></i>
+          </button>
+          <button class="chat-action-btn-mini" id="btnCloseChat" title="Close Chat" style="background: transparent; border: none; cursor: pointer; color: var(--text-secondary); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages body -->
+      <div class="chat-messages" id="chatMessages" style="flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.3); max-height: 350px;">
+        <div class="message bot" style="background: white; border: 1px solid var(--glass-border); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-primary); max-width: 85%; align-self: flex-start; box-shadow: var(--shadow-sm); line-height: 1.5;">
+          <p data-en="Hello! I am SevaMitra, your UP citizen schemes guide. How can I help you today?" data-hi="नमस्ते! मैं सेवामित्र हूँ, आपका यूपी नागरिक योजना गाइड। आज मैं आपकी क्या सहायता कर सकता हूँ?">Hello! I am SevaMitra, your UP citizen schemes guide. How can I help you today?</p>
+        </div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="chat-input-bar" style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--glass-border); background: white;">
+        <button class="voice-input-btn" id="btnVoiceInput" title="Speak in Hindi/English" style="background: rgba(0,0,128,0.04); border: 1px solid var(--glass-border); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-navy); transition: all 0.2s;">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask me something..." data-en-placeholder="Ask me something..." data-hi-placeholder="मुझसे कुछ पूछें..." style="flex: 1; border: 1px solid var(--glass-border); border-radius: 20px; padding: 8px 16px; font-size: 0.85rem; outline: none;">
+        <button class="btn btn-primary" id="btnChatSend" style="width: 36px; height: 36px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <i class="fa-solid fa-paper-plane" style="font-size: 0.9rem;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offline Indicator Banner -->
+  <div id="offlineBanner" class="offline-banner" data-en="🔴 You are offline — limited features available" data-hi="🔴 आप ऑफ़लाइन हैं — सीमित सुविधाएं उपलब्ध">🔴 You are offline — limited features available</div>
 
   <!-- JS Scripts -->
   <script src="/js/app.js"></script>
