@@ -33,7 +33,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'docs')));
 
 // --- File Upload Config ---
 const UPLOADS_DIR = path.join(__dirname, 'uploads', 'grievances');
@@ -672,7 +672,7 @@ app.get('/api/analytics/data', (req, res) => {
 
 // Serve SPA Frontend for other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'docs', 'index.html'));
 });
 
 app.listen(PORT, () => {
