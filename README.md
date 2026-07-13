@@ -1,6 +1,6 @@
 # 🪷  NagrikSeva
  
-> AI-powered bilingual platform helping UP citizens find eligible government schemes, track deadlines, and file grievances.
+> AI-Powered Citizen Assistance Platform for Uttar Pradesh
  
 ---
  
@@ -88,8 +88,8 @@ NagrikSeva solves the information gap between citizens and government welfare sc
 ## 📽️ Demo & Deliverables
  
 - **Demo Video Link (Mandatory):** [https://youtu.be/X78UOKbN5xk]
-- **Deployment Link (Recommended):** [https://nagrikseva-3zgq.onrender.com](https://nagrikseva-3zgq.onrender.com)
-- **Pitch Deck / PPT (Optional):** [Paste link if you have one]
+- **Deployment Link (Recommended):** [https://nagrikseva-3zgq.onrender.com]
+- **Pitch Deck / PPT (Optional):** [https://1drv.ms/p/c/f09de06eba868715/IQCdJ0YNw2hfTIhO-JWWaQl9ATI4_u0FBaeAa7Ux-OpKx1E?e=TnLSFh]
 ---
  
 ## ✅ Tasks & Bonus Checklist
